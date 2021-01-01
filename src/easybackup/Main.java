@@ -52,6 +52,13 @@ public class Main {
                 System.out.println("jpg dir : " + args[3]);
                 HEICBackup db = new HEICBackup(utils);
                 numberOfFilesBackupped = db.heicBackup(args[1], args[2], args[3], since);
+            } else if (args[0].equals("proraw") && args.length >= 4) {
+                System.out.println("Backup all ProRaw files that have a related JPG file");
+                System.out.println("from    : " + args[1]);
+                System.out.println("to      : " + args[2]);
+                System.out.println("jpg dir : " + args[3]);
+                ProRawBackup db = new ProRawBackup(utils);
+                numberOfFilesBackupped = db.proRawBackup(args[1], args[2], args[3], since);
             } else if (args[0].equals("ftp") && args.length >= 5) {
                 System.out.println("Transfer files via FTP");
                 System.out.println("from    : " + args[1]);
