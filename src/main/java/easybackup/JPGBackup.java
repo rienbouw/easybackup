@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -55,7 +56,7 @@ public class JPGBackup {
                 Path targetDir = target.getParent();
                 new File(targetDir.toString()).mkdirs();
                 log.debug("copy(" + sourceFilePath + ", " + target + ")");
-                //Files.copy(sourceFilePath, target);
+                Files.copy(sourceFilePath, target);
                 result++;
             } else {
                 log.trace("already backuped(" + sourceFilePath + ", " + target + ")");
