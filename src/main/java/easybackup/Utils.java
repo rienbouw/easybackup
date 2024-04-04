@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 public class Utils {
     private Logger log = LogManager.getLogger(Utils.class);
 
-    private String MODEL = "Canon EOS";
+    private String MODEL = "ILCE-7M2";
     private FileFilter imagesFilter = new FileFilter() {
         @Override
         public boolean accept(File f) {
@@ -93,7 +93,7 @@ public class Utils {
                             try {
                                 long modmillis = Files.getLastModifiedTime(path).toMillis();
                                 if (modmillis > since) {
-                                    //log.info("Scan " + path.getFileName() + (since > 0 ? (" " + humanDateTime(modmillis) + " > " + humanDateTime(since)) : ""));
+                                    log.debug("Scan " + path.getFileName() + (since > 0 ? (" " + humanDateTime(modmillis) + " > " + humanDateTime(since)) : ""));
                                     listImageFilesOneDirectory(path, map, model);
                                 } else {
                                     log.trace("Skipped " + path.getFileName() + " not modified " + humanDateTime(modmillis) + " > since " + humanDateTime(since));
@@ -175,7 +175,7 @@ public class Utils {
                     try {
                         long modmillis = Files.getLastModifiedTime(path).toMillis();
                         if (modmillis > since) {
-                            //System.out.println(path.getFileName() + " " + humanDateTime(modmillis) + " > " + humanDateTime(since));
+                            //log.trace(path.getFileName() + " " + humanDateTime(modmillis) + " > " + humanDateTime(since));
                             String id = fileNameWithoutExtension(fileToMap);
                             File f = map.get(id);
                             map.put(fileToMap.toString(), fileToMap);
