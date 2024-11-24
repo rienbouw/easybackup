@@ -27,7 +27,7 @@ public class ProRawBackup {
      * Find for each JPG file the corresponding ProRaw file and copy it to
      * the NAS when it does not exist there yet.
      */
-    public int proRawBackup(String ProRawSourceDir, String ProRawTargetDir, String jpgDir, long since) throws Exception {
+    public int proRawBackup(String ProRawSourceDir, String ProRawTargetDir, String jpgDir, long since, boolean verbose) throws Exception {
         int result = 0;
         Map<String, File> ProRawSourceFilesMap = new ConcurrentHashMap<String, File>();
         Map<String, File> jpgFilesMap = new ConcurrentHashMap<String, File>();
@@ -51,11 +51,16 @@ public class ProRawBackup {
             Path ProRawTargetDirPath = Paths.get(ProRawTargetDir);
             Path relativePath = ProRawSourceDirPath.relativize(ProRawSourceFilePath);
             Path target = Paths.get(ProRawTargetDirPath.toString() + File.separator + relativePath.toString());
-            log.info("Backup ProRaw file: " + relativePath);
+
             Path targetDir = target.getParent();
             new File(targetDir.toString()).mkdirs();
-            Files.copy(ProRawSourceFilePath, target);
-            //log.debug("Backup " + ProRawSourceFilePath + " to " + target);
+            if (verbose) {
+                log.debug("Backup " + ProRawSourceFilePath + " to " + target);
+            } else {
+                log.info("Backup ProRaw file: " + relativePath);
+                Files.copy(ProRawSourceFilePath, target);
+            }
+
         }
         //utils.saveFileList(ProRawSourceFilesMap, "");
 //        log.debug("Create a list of all JPG files..");

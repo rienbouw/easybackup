@@ -18,6 +18,7 @@ public class Main {
         }
 
         Utils utils = new Utils();
+        boolean verbose = false;
         String sinceProp = utils.loadProperty("since");
         long since = sinceProp != null ? Long.parseLong(sinceProp) : System.currentTimeMillis() - 900000000;
 
@@ -58,7 +59,7 @@ public class Main {
                 System.out.println("to      : " + args[2]);
                 System.out.println("jpg dir : " + args[3]);
                 ProRawBackup db = new ProRawBackup(utils);
-                numberOfFilesBackupped = db.proRawBackup(args[1], args[2], args[3], since);
+                numberOfFilesBackupped = db.proRawBackup(args[1], args[2], args[3], since, verbose);
             } else if (args[0].equals("ftp") && args.length >= 5) {
                 System.out.println("Transfer files via FTP");
                 System.out.println("from    : " + args[1]);
@@ -69,6 +70,8 @@ public class Main {
                 FTPTransfer ft = new FTPTransfer(utils);
                 numberOfFilesBackupped = ft.ftpTransfer(args[1], args[2], args[3], args[4], args[5], since);
             } else if (args[0].equals("-s")) {
+                System.out.println("Set timestamp, next time files after now are transfered");
+            } else if (args[0].equals("-v")) {
                 System.out.println("Set timestamp, next time files after now are transfered");
             } else {
                 usage();

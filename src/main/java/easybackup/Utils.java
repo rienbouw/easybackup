@@ -93,7 +93,7 @@ public class Utils {
                             try {
                                 long modmillis = Files.getLastModifiedTime(path).toMillis();
                                 if (modmillis > since) {
-                                    log.debug("Scan " + path.getFileName() + (since > 0 ? (" " + humanDateTime(modmillis) + " > " + humanDateTime(since)) : ""));
+                                    log.trace("Scan " + path.getFileName() + (since > 0 ? (" " + humanDateTime(modmillis) + " > " + humanDateTime(since)) : ""));
                                     listImageFilesOneDirectory(path, map, model);
                                 } else {
                                     log.trace("Skipped " + path.getFileName() + " not modified " + humanDateTime(modmillis) + " > since " + humanDateTime(since));
