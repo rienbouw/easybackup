@@ -238,7 +238,7 @@ public class Utils {
                 }
 
             } catch (JpegProcessingException ex) {
-                log.error(ex);
+                log.error("Error in '" + path + ": " + ex);
             }
             String modelExif = null;
 
