@@ -45,15 +45,15 @@ public class ProRawBackup {
         result = ProRawSourceFilesMap.size();
         //log.debug("Number of source ProRaw files that have a corresponding JPG file and do not have a backup: " + result);
 
+        Path ProRawSourceDirPath = Paths.get(ProRawSourceDir);
+        Path ProRawTargetDirPath = Paths.get(ProRawTargetDir);
         for (Map.Entry<String, File> entry : ProRawSourceFilesMap.entrySet()) {
-            Path ProRawSourceFilePath = Paths.get(entry.getValue().getAbsolutePath());
-            Path ProRawSourceDirPath = Paths.get(ProRawSourceDir);
-            Path ProRawTargetDirPath = Paths.get(ProRawTargetDir);
+            Path ProRawSourceFilePath = entry.getValue().toPath();
             Path relativePath = ProRawSourceDirPath.relativize(ProRawSourceFilePath);
-            Path target = Paths.get(ProRawTargetDirPath.toString() + File.separator + relativePath.toString());
+            Path target = ProRawTargetDirPath.resolve(relativePath);
 
             Path targetDir = target.getParent();
-            new File(targetDir.toString()).mkdirs();
+            Files.createDirectories(targetDir);
             if (verbose) {
                 log.debug("Backup " + ProRawSourceFilePath + " to " + target);
             } else {

@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -83,30 +83,18 @@ public class Utils {
     }
 
     private boolean listImageFiles(Path imagesPath, Map<String, File> map, String model, long since) throws IOException {
-        boolean successfull = true;
+        AtomicBoolean successfull = new AtomicBoolean(true);
 
         log.debug("listImagesFiles from " + imagesPath);
-        Files.walk(imagesPath)
-                .parallel()
-                .filter(Files::isDirectory)
-                .forEach(path -> {
-                            try {
-                                long modmillis = Files.getLastModifiedTime(path).toMillis();
-                                if (modmillis > since) {
-                                    log.trace("Scan " + path.getFileName() + (since > 0 ? (" " + humanDateTime(modmillis) + " > " + humanDateTime(since)) : ""));
-                                    listImageFilesOneDirectory(path, map, model);
-                                } else {
-                                    log.trace("Skipped " + path.getFileName() + " not modified " + humanDateTime(modmillis) + " > since " + humanDateTime(since));
-                                }
+        try (Stream<Path> paths = Files.walk(imagesPath)) {
+            paths.parallel()
+                    .filter(Files::isRegularFile)
+                    .filter(path -> isModifiedSince(path, since))
+                    .filter(path -> filterTypeAndCamera(path, model))
+                    .forEach(path -> addImageFileToMap(path, map, successfull));
+        }
 
-                            } catch (IOException ex) {
-                                log.error("Exception " + ex);
-
-                            }
-                        }
-                );
-
-        return successfull;
+        return successfull.get();
     }
 
     public void saveFileList(Map<String, File> map, String name) {
@@ -115,79 +103,45 @@ public class Utils {
         }
     }
 
-    private boolean listImageFilesOneDirectory(Path imagesPath, Map<String, File> map, String model) throws IOException {
-        AtomicBoolean successFull = new AtomicBoolean(true);
-
-        Files.walk(imagesPath)
-                .filter(path -> filterTypeAndCamera(path, model))
-                .parallel()
-                .forEach(path -> {
-                            File fileToMap = path.toFile();
-                            String id = fileNameWithoutExtension(fileToMap);
-                            File f = map.get(id);
-                            if (f != null) {
-                                if (!haveSameOriginalDate(f, fileToMap)) {
-                                    // Two files have the same name but different orginal date, so must be different pics;
-                                    log.warn("Duplicate name for different images:" + f.getAbsolutePath() + " == " + fileToMap.getAbsolutePath());
-                                    successFull.set(false);
-                                }
-                            }
-                            //log.trace("Add to map (key=" + id + "): " + fileToMap);
-                            map.put(id, fileToMap);
-                        }
-                );
-
-        return successFull.get();
-    }
-
-
     public boolean listFiles(Path listPath, Map<String, File> map, long since) throws IOException {
-        boolean successfull = true;
+        AtomicBoolean successfull = new AtomicBoolean(true);
 
-        Files.walk(listPath)
-                .parallel()
-                .filter(Files::isDirectory)
-                .forEach(path -> {
-                            try {
-                                listFilesOneDirectory(path, map, since);
+        try (Stream<Path> paths = Files.walk(listPath)) {
+            paths.parallel()
+                    .filter(Files::isRegularFile)
+                    .filter(path -> isModifiedSince(path, since))
+                    .forEach(path -> map.put(path.toString(), path.toFile()));
+        }
 
-                            } catch (IOException ex) {
-
-                            }
-                        }
-                );
-
-        return successfull;
+        return successfull.get();
     }
 
-    private boolean listFilesOneDirectory(Path imagesPath, Map<String, File> map, long since) throws IOException {
-        AtomicBoolean successFull = new AtomicBoolean(true);
+    private boolean isModifiedSince(Path path, long since) {
+        if (since <= 0) {
+            return true;
+        }
+        try {
+            long modmillis = Files.getLastModifiedTime(path).toMillis();
+            boolean modifiedSince = modmillis > since;
+            if (!modifiedSince) {
+                log.trace("Skipped " + path.getFileName() + " not modified " + humanDateTime(modmillis) + " > since " + humanDateTime(since));
+            }
+            return modifiedSince;
+        } catch (IOException ex) {
+            log.error("Exception " + ex);
+            return false;
+        }
+    }
 
-        Files.walk(imagesPath)
-                .collect(Collectors.toList())
-                .parallelStream()
-
-                //   Files.walk(imagesPath)
-                //        .parallel()
-                .filter(Files::isRegularFile)
-                .forEach(path -> {
-                    File fileToMap = path.toFile();
-                    try {
-                        long modmillis = Files.getLastModifiedTime(path).toMillis();
-                        if (modmillis > since) {
-                            //log.trace(path.getFileName() + " " + humanDateTime(modmillis) + " > " + humanDateTime(since));
-                            String id = fileNameWithoutExtension(fileToMap);
-                            File f = map.get(id);
-                            map.put(fileToMap.toString(), fileToMap);
-                        } else {
-                            //System.out.println("Skip " + path.getFileName() + " " + humanDateTime(modmillis) + " > " + humanDateTime(since));
-                        }
-                    } catch (IOException ex) {
-
-                    }
-                });
-
-        return successFull.get();
+    private void addImageFileToMap(Path path, Map<String, File> map, AtomicBoolean successFull) {
+        File fileToMap = path.toFile();
+        String id = fileNameWithoutExtension(fileToMap);
+        File existingFile = map.putIfAbsent(id, fileToMap);
+        if (existingFile != null && !haveSameOriginalDate(existingFile, fileToMap)) {
+            // Two files have the same name but different original date, so must be different pics.
+            log.warn("Duplicate name for different images:" + existingFile.getAbsolutePath() + " == " + fileToMap.getAbsolutePath());
+            successFull.set(false);
+        }
     }
 
     private boolean isIgnorablePhotoFile(File file) {

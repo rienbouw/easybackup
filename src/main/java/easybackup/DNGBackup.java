@@ -4,10 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -36,20 +33,18 @@ public class DNGBackup {
         //System.out.println("Create a list of all JPG files..");
         utils.listImageFiles(jpgDir, jpgFiles, since);
 
-        SortedSet<String> sortedJPGset = new TreeSet<String>(jpgFiles.keySet());
-        Iterator<String> it = sortedJPGset.iterator();
-        while (it.hasNext()) {
-            String key = it.next();
-            if (dngSourceFiles.containsKey(key)) {
-                Path dngSourceFilePath = Paths.get(dngSourceFiles.get(key).getAbsolutePath());
-                Path dngSourceDirPath = Paths.get(dngSourceDir);
-                Path dngTargetDirPath = Paths.get(dngTargetDir);
+        Path dngSourceDirPath = Paths.get(dngSourceDir);
+        Path dngTargetDirPath = Paths.get(dngTargetDir);
+        for (String key : jpgFiles.keySet()) {
+            File dngSourceFile = dngSourceFiles.get(key);
+            if (dngSourceFile != null) {
+                Path dngSourceFilePath = dngSourceFile.toPath();
                 Path relativePath = dngSourceDirPath.relativize(dngSourceFilePath);
-                Path target = Paths.get(dngTargetDirPath.toString() + File.separator + relativePath.toString());
-                if (!target.toFile().exists()) {
+                Path target = dngTargetDirPath.resolve(relativePath);
+                if (!Files.exists(target)) {
                     System.out.println("Backup DNG file: " + relativePath);
                     Path targetDir = target.getParent();
-                    new File(targetDir.toString()).mkdirs();
+                    Files.createDirectories(targetDir);
                     Files.copy(dngSourceFilePath, target);
                     result++;
                 } else {

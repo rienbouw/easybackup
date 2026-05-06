@@ -11,10 +11,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -42,19 +39,16 @@ public class JPGBackup {
         if (!this.utils.listImageFiles(jpgDir, jpgFiles, "!" + MODEL, since)) {
             throw new Exception("Aborted: duplicate file names found");
         }
-        SortedSet<String> sortedJPGset = new TreeSet<String>(jpgFiles.keySet());
-        Iterator<String> it = sortedJPGset.iterator();
-        while (it.hasNext()) {
-            String key = it.next();
-            Path sourceFilePath = Paths.get(jpgFiles.get(key).getAbsolutePath());
-            Path sourceDirPath = Paths.get(jpgDir);
-            Path targetDirPath = Paths.get(backupDir);
+        Path sourceDirPath = Paths.get(jpgDir);
+        Path targetDirPath = Paths.get(backupDir);
+        for (File jpgFile : jpgFiles.values()) {
+            Path sourceFilePath = jpgFile.toPath();
             Path relativePath = sourceDirPath.relativize(sourceFilePath);
-            Path target = Paths.get(targetDirPath.toString() + File.separator + relativePath.toString());
-            if (!target.toFile().exists()) {
+            Path target = targetDirPath.resolve(relativePath);
+            if (!Files.exists(target)) {
                 System.out.println("Backup: " + relativePath);
                 Path targetDir = target.getParent();
-                new File(targetDir.toString()).mkdirs();
+                Files.createDirectories(targetDir);
                 log.debug("copy(" + sourceFilePath + ", " + target + ")");
                 Files.copy(sourceFilePath, target);
                 result++;

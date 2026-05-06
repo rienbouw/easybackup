@@ -45,15 +45,15 @@ public class HEICBackup {
         result = heicSourceFilesMap.size();
         //log.debug("Number of source HEIC files that have a corresponding JPG file and do not have a backup: " + result);
 
+        Path heicSourceDirPath = Paths.get(heicSourceDir);
+        Path heicTargetDirPath = Paths.get(heicTargetDir);
         for (Map.Entry<String, File> entry : heicSourceFilesMap.entrySet()) {
-            Path heicSourceFilePath = Paths.get(entry.getValue().getAbsolutePath());
-            Path heicSourceDirPath = Paths.get(heicSourceDir);
-            Path heicTargetDirPath = Paths.get(heicTargetDir);
+            Path heicSourceFilePath = entry.getValue().toPath();
             Path relativePath = heicSourceDirPath.relativize(heicSourceFilePath);
-            Path target = Paths.get(heicTargetDirPath.toString() + File.separator + relativePath.toString());
+            Path target = heicTargetDirPath.resolve(relativePath);
             log.info("Backup HEIC file: " + relativePath);
             Path targetDir = target.getParent();
-            new File(targetDir.toString()).mkdirs();
+            Files.createDirectories(targetDir);
             Files.copy(heicSourceFilePath, target);
             //log.debug("Backup " + heicSourceFilePath + " to " + target);
         }
